@@ -1,6 +1,6 @@
-
 import streamlit as st
 import httpx
+import re
 
 # ←←← ТВОИ КЛЮЧИ
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
@@ -12,7 +12,7 @@ def ask_yandex_gpt(prompt):
     headers = {"Authorization": f"Api-Key {API_KEY}", "Content-Type": "application/json"}
     payload = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
-        "completionOptions": {"temperature": 0.6, "maxTokens": 2500},
+        "completionOptions": {"temperature": 0.3, "maxTokens": 2500},  # temperature ниже = точнее
         "messages": [{"role": "user", "text": prompt}]
     }
     try:
@@ -29,21 +29,20 @@ if "generated" not in st.session_state:
     st.session_state.generated = False
 
 st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
-st.title("ЕГЭ-GPT по информатике 2026")
+st.title("ЕГЭ-GPT по информатике 2026 — ФИПИ-уровень")
 
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
 if st.button("Сгенерировать новую задачу"):
-    with st.spinner("YandexGPT думает..."):
-        prompt = f"""Ты эксперт ФИПИ ЕГЭ по информатике 2026.
-Сгенерируй новую задачу №{num} (не из банка ФИПИ).
+    with st.spinner("Генерирую задачу..."):
+        prompt = f"""Ты эксперт ФИПИ. Сгенерируй новую задачу №{num} ЕГЭ 2026 (не из банка).
 
 Выведи строго в трёх частях:
 ### УСЛОВИЕ
 [условие]
 
 ### ОТВЕТ
-[правильный ответ — число или короткий код]
+[только чистый ответ — число или короткий код, без пояснений]
 
 ### РАЗБОР
 [подробный разбор]"""
@@ -69,45 +68,44 @@ if st.session_state.generated:
     st.markdown(st.session_state.task["condition"])
 
     st.markdown("---")
-    user_solution = st.text_area("Твоё решение или ответ:", height=150)
+    user_solution = st.text_area("Введи ответ (число или код):", height=100)
 
     if st.button("Проверить решение"):
         if user_solution.strip():
-            with st.spinner("Проверяю..."):
-                check_prompt = f"""Ты объективный и справедливый эксперт ФИПИ ЕГЭ по информатике.
+            with st.spinner("Проверяю по критериям ФИПИ..."):
+                # ←←← САМЫЙ ЖЁСТКИЙ И ТОЧНЫЙ ПРОМПТ
+                check_prompt = f"""Ты эксперт-оценщик ФИПИ ЕГЭ по информатике.
 
+Правильный ответ: {st.session_state.task['answer'].strip()}
 
+Ответ ученика: "{user_solution.strip()}"
 
-Задача №{num}:
-{st.session_state.task['condition']}
+Правила оценки:
+1. Если ответ ученика — ТОЧНО такое же число/строка, как правильный — 100 баллов.
+2. Если отличается пробелами, регистром, лишними символами — 0 баллов.
+3. Никаких пояснений не учитывать — только само значение.
 
-Решение ученика:
-{user_solution}
+Выведи ровно так:
 
-Правильный ответ:
-{st.session_state.task['answer'].strip()}
+Баллы: 100 или 0
 
-Полный разбор:
-{st.session_state.task['explanation'].strip()}
+Критерии проверки:
+- Совпадение с правильным ответом → 100 баллов
+- Любое отклонение (пробелы, буквы, пояснения) → 0 баллов
 
-Сравни решение ученика с правильным
-Дай честную оценку:
-- Баллы: [0–100]
-- Ответ никак не соответсует: (неправильно) 
-- Ошибки: [если есть]
-- Как исправить: [нормально]"""
+Замечания: [если 0 — коротко, почему]"""
 
-                
                 feedback = ask_yandex_gpt(check_prompt)
-                st.markdown("### Результат проверки")
+
+                st.markdown("### Результат проверки ФИПИ")
                 st.markdown(feedback)
 
-                with st.expander("Спойлер: ответ и разбор", expanded=False):
+                with st.expander("Спойлер: правильный ответ и разбор", expanded=False):
                     st.success(f"Правильный ответ:\n{st.session_state.task['answer']}")
                     st.info(st.session_state.task['explanation'])
         else:
-            st.warning("Введи решение!")
+            st.warning("Введи ответ!")
 else:
     st.info("↑ Сначала сгенерируй задачу")
 
-st.caption("Работает на YandexGPT • 2026 • Ты — гений!")
+st.caption("YandexGPT • Жёсткая проверка как на реальном ЕГЭ • 2026")
