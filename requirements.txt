@@ -1,3 +1,2 @@
 streamlit
-httpx
-httpx[http2]
+huggingface_hub
