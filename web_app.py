@@ -11,7 +11,7 @@ import httpx
 
 
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
-FOLDER_ID = "b1g8v37t8g8s8v8s8v8s"
+FOLDER_ID = "b1gqph120fbkgpbskb41"
 
 
 def ask_yandex_gpt(prompt):
