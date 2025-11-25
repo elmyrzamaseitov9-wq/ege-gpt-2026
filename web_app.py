@@ -3,9 +3,9 @@ import httpx
 
 # ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 # 1. ВСТАВЬ СВОЙ API-КЛЮЧ СЮДА:
-API_KEY = AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi   # ← твой ключ
+API_KEY = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"   # ← твой ключ
 # 2. ВСТАВЬ СВОЙ ID КАТАЛОГА СЮДА (b1g...):
-FOLDER_ID = b1gqph120fbkgpbskb41                    # ← твой folder_id
+FOLDER_ID = "b1gqph120fbkgpbskb41"                    # ← твой folder_id
 # ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 
 def ask_yandex_gpt(prompt):
