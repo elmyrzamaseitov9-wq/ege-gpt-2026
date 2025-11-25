@@ -96,12 +96,7 @@ if st.session_state.generated:
 Полный разбор:
 {st.session_state.task['explanation'].strip()}
 
-Сравни решение ученика с правильным.
-Дай честную оценку:
-- Баллы: [0–100]
-- Верно ли? (да/нет/почти)
-- Ошибки: [если есть]
-- Как исправить: [коротко]"""
+
                 
                 feedback = ask_yandex_gpt(check_prompt)
                 st.markdown("### Результат проверки")
