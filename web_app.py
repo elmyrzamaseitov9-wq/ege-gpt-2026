@@ -95,4 +95,4 @@ if st.session_state.generated:
 else:
     st.info("↑ Сначала сгенерируй задачу")
 
-st.caption("Работает на YandexGPT • 2026 • Разработано by E1")
+st.caption("Работает на YandexGPT • 2026 • Разработано by El1")
