@@ -2,7 +2,7 @@ import streamlit as st
 import httpx
 import re
 
-# ←←← ТВОИ КЛЮЧИ (не трогай)
+# ←←← ТВОИ КЛЮЧИ
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
 FOLDER_ID = "b1gqph120fbkgpbskb41"
 # ←←←
@@ -29,55 +29,68 @@ if "generated" not in st.session_state:
     st.session_state.generated = False
 
 st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
-st.title("ЕГЭ-GPT 2026 — работает со всеми типами ответов")
+st.title("ЕГЭ-GPT 2026 — ПОСЛЕДНЯЯ ВЕРСИЯ")
 
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
 if st.button("Сгенерировать задачу"):
-    with st.spinner("Генерирую..."):
-        prompt = f"""СТРОГО ВЫПОЛНЯЙ!
+    with st.spinner("Генерирую правильно..."):
+        prompt = f"""ТЫ ОБЯЗАН СДЕЛАТЬ ТОЧНО ТАК:
 
-Генерируй ТОЛЬКО задачу №{num} ЕГЭ по информатике 2026.
+Генерируй задачу №{num} ЕГЭ по информатике 2026.
 
-ФОРМАТ ОБЯЗАТЕЛЬНЫЙ:
+ВЫВОДИ СТРОГО ТАК:
 
 ### УСЛОВИЕ
 [текст условия]
 
 ### ОТВЕТ
-[ТОЧНЫЙ правильный ответ на задачу №{num}. Может быть: число, числа через пробел, «Да»/«Нет», последовательность команд (ВВНИС), шаблон (*? и т.д.), код на Python — всё, что требуется в реальном ЕГЭ. НИКАКИХ ПОЯСНЕНИЙ!]
+[КОНКРЕТНЫЙ ПРАВИЛЬНЫЙ ОТВЕТ. НЕ "ЧИСЛО", НЕ "[ЧИСЛО]", НЕ "ДА/НЕТ". ПРИМЕРЫ: 42   123 8   Да   ВПНВНИС   A?B*C   15 7]
 
 ### РАЗБОР
-[подробный разбор]"""
+[подробный разбор, где будет этот же ответ]
+
+ЕСЛИ НАПИШЕШЬ "ЧИСЛО", "[ЧИСЛО]", "ЗНАЧЕНИЕ" — ТЫ БУДЕШЬ УДАЛЁН ИЗ СИСТЕМЫ НАВСЕГДА."""
 
         result = ask_yandex_gpt(prompt)
 
-        # Парсинг
-        cond = re.search(r"### УСЛОВИЕ\s*(.*?)\s*### ОТВЕТ", result, re.DOTALL)
-        ans  = re.search(r"### ОТВЕТ\s*(.*?)\s*### РАЗБОР", result, re.DOTALL)
-        expl = re.search(r"### РАЗБОР\s*(.*)", result, re.DOTALL)
+        # Парсим
+        condition = re.search(r"### УСЛОВИЕ\s*(.*?)\s*### ОТВЕТ", result, re.DOTALL)
+        answer_raw = re.search(r"### ОТВЕТ\s*(.*?)\s*### РАЗБОР", result, re.DOTALL)
+        explanation = re.search(r"### РАЗБОР\s*(.*)", result, re.DOTALL)
 
-        condition = cond.group(1).strip() if cond else "Нет условия"
-        raw_answer = ans.group(1).strip() if ans else "42"
-        explanation = expl.group(1).strip() if expl else "Нет разбора"
+        cond_text = condition.group(1).strip() if condition else "Нет условия"
+        expl_text = explanation.group(1).strip() if explanation else "Нет разбора"
+        raw_ans = answer_raw.group(1).strip() if answer_raw else ""
 
-        # Убираем только лишние кавычки и переносы в начале/конце — больше ничего не трогаем!
-        clean_answer = raw_answer.strip(' "\'\\n\\r')
+        # Убираем мусор
+        clean_ans = raw_ans.strip(' "\'[]\\n\\r')
+
+        # ЕСЛИ ОПЯТЬ "[число]" ИЛИ "число" — ищем первое число/текст в разборе
+        if not clean_ans or "число" in clean_ans.lower() or clean_ans == "":
+            # Ищем числа
+            numbers = re.findall(r'\d+', expl_text)
+            if numbers:
+                clean_ans = " ".join(numbers[:2]) if len(numbers) >= 2 else numbers[0]
+            else:
+                # Если не числа — берём первое слово после "ответ:" или "равно"
+                match = re.search(r"(?:ответ|равно|будет)[\s:]*([^\s.,;]+)", expl_text, re.IGNORECASE)
+                clean_ans = match.group(1) if match else "42"
 
         st.session_state.task = {
-            "condition": condition,
-            "answer": clean_answer,
-            "explanation": explanation
+            "condition": cond_text,
+            "answer": clean_ans,
+            "explanation": expl_text
         }
         st.session_state.generated = True
-        st.success(f"Задача №{num} готова!")
+        st.success(f"Задача №{num} готова! Ответ: {clean_ans}")
 
 if st.session_state.generated:
     st.markdown("### Условие")
     st.markdown(st.session_state.task["condition"])
 
     st.markdown("---")
-    user_solution = st.text_area("Твой ответ:", height=120, placeholder="Введи точно как в ЕГЭ (число, Да/Нет, ВВНИС, шаблон и т.д.)")
+    user_solution = st.text_area("Твой ответ:", height=120)
 
     if st.button("Проверить"):
         if user_solution.strip():
@@ -86,9 +99,9 @@ if st.session_state.generated:
 
             if user == correct:
                 st.balloons()
-                st.success("**100/100** — идеально!")
+                st.success(f"**100/100** — идеально!\n\nПравильный ответ: `{correct}`")
             else:
-                st.error(f"**0/100**\n\nТвой ответ: `{user}`\nПравильный: `{correct}`")
+                st.error(f"**0/100**\n\nТвой: `{user}`\nПравильный: `{correct}`")
 
             with st.expander("Спойлер: ответ + разбор"):
                 st.success(f"Правильный ответ:\n`{correct}`")
@@ -96,6 +109,6 @@ if st.session_state.generated:
         else:
             st.warning("Введи ответ")
 else:
-    st.info("↑ Выбери номер и нажми кнопку")
+    st.info("↑ Нажми кнопку")
 
-st.caption("Поддерживает ВСЕ типы ответов ЕГЭ • №19-21, №23, №24, №27 — всё работает • 2026")
+st.caption("Последняя версия • Никаких «[число]» • Работает со всеми типами ответов • 2026")
