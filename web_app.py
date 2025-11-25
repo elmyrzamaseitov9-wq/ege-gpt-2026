@@ -1,11 +1,15 @@
+#РАЗРАБОТАНО МАТЬ ЕГО ЭЛОМ
+#／ﾌﾌ ▔▔▔▔▔▔▔ム｀ヽ
+#/ ノ) 　　　　　　　 　）ヽ　　　　　　　 　
+#/ ｜　　( ͡° ͜ʖ ͡°）ノ⌒（ゝ._,ノ　　　　　
+#/　ﾉ⌒7⌒ヽーく　 ＼　／　　　　
+#丶＿ ノ ｡　　 ノ､　｡|/　　　　　　 　 　　　　
+#　　 `ヽ `ー-'_人`ーﾉ　　　　　　 　　
+#　　　 丶 ￣ _人'彡ﾉ
 import streamlit as st
 import httpx
-
-# ←←← Твои ключи (оставь как есть)
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
 FOLDER_ID = "b1gqph120fbkgpbskb41"
-# ←←←
-
 def ask_yandex_gpt(prompt):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     headers = {"Authorization": f"Api-Key {API_KEY}", "Content-Type": "application/json"}
@@ -24,7 +28,6 @@ def ask_yandex_gpt(prompt):
 st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
 st.title("ЕГЭ-GPT по информатике 2026 — финальная версия!")
 
-# ←←← Инициализация сессии один раз
 if "task" not in st.session_state:
     st.session_state.task = None
 if "generated" not in st.session_state:
@@ -32,20 +35,14 @@ if "generated" not in st.session_state:
 
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
-# Генерация задачи
 if st.button("Сгенерировать новую задачу"):
     with st.spinner("YandexGPT генерирует задачу..."):
         prompt = f"""Ты эксперт ФИПИ ЕГЭ по информатике 2026.
 Сгенерируй новую задачу №{num} (не из банка).
 
 Выведи строго в трёх частях:
-### УСЛОВИЕ
 [условие]
-
-### ОТВЕТ
 [правильный ответ]
-
-### РАЗБОР
 [подробный разбор]"""
 
         result = ask_yandex_gpt(prompt)
@@ -64,14 +61,12 @@ if st.button("Сгенерировать новую задачу"):
         st.session_state.generated = True
         st.success("Задача готова!")
 
-# Показываем условие (всегда, если сгенерировано)
 if st.session_state.generated:
     st.markdown("### Условие задачи")
     st.markdown(st.session_state.task["condition"])
 
     st.markdown("---")
     st.markdown("### Твоё решение")
-    # ←←← БЕЗ key= — теперь не сбрасывает!
     user_solution = st.text_area("Введи сюда решение или ответ:", height=150)
 
     if st.button("Проверить решение"):
@@ -100,4 +95,4 @@ if st.session_state.generated:
 else:
     st.info("↑ Сначала сгенерируй задачу")
 
-st.caption("Работает на YandexGPT • 2026 • Ты — бог информатики!")
+st.caption("Работает на YandexGPT • 2026 • Разработано by E1")
