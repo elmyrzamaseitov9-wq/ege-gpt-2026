@@ -2,17 +2,17 @@ import streamlit as st
 import httpx
 import re
 
-# ←←← ТВОИ КЛЮЧИ
+
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
 FOLDER_ID = "b1gqph120fbkgpbskb41"
-# ←←←
+
 
 def ask_yandex_gpt(prompt):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     headers = {"Authorization": f"Api-Key {API_KEY}", "Content-Type": "application/json"}
     payload = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
-        "completionOptions": {"temperature": 0.3, "maxTokens": 2500},  # temperature ниже = точнее
+        "completionOptions": {"temperature": 0.3, "maxTokens": 2500},  
         "messages": [{"role": "user", "text": prompt}]
     }
     try:
@@ -22,14 +22,14 @@ def ask_yandex_gpt(prompt):
     except Exception as e:
         return f"Ошибка YandexGPT: {e}"
 
-# Инициализация
+
 if "task" not in st.session_state:
     st.session_state.task = None
 if "generated" not in st.session_state:
     st.session_state.generated = False
 
 st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
-st.title("ЕГЭ-GPT по информатике 2026 — ФИПИ-уровень")
+st.title("ЕГЭ-GPT по информатике 2026")
 
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
@@ -72,8 +72,8 @@ if st.session_state.generated:
 
     if st.button("Проверить решение"):
         if user_solution.strip():
-            with st.spinner("Проверяю по критериям ФИПИ..."):
-                # ←←← САМЫЙ ЖЁСТКИЙ И ТОЧНЫЙ ПРОМПТ
+            with st.spinner("Проверяю по критериям ЕГЭ..."):
+               
                 check_prompt = f"""Ты эксперт-оценщик ФИПИ ЕГЭ по информатике.
 
 Правильный ответ: {st.session_state.task['answer'].strip()}
@@ -97,7 +97,7 @@ if st.session_state.generated:
 
                 feedback = ask_yandex_gpt(check_prompt)
 
-                st.markdown("### Результат проверки ФИПИ")
+                st.markdown("### Результат проверки")
                 st.markdown(feedback)
 
                 with st.expander("Спойлер: правильный ответ и разбор", expanded=False):
