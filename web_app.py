@@ -1,12 +1,10 @@
 import streamlit as st
 import httpx
 
-# ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-# 1. ВСТАВЬ СВОЙ API-КЛЮЧ СЮДА:
-API_KEY = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"   # ← твой ключ
-# 2. ВСТАВЬ СВОЙ ID КАТАЛОГА СЮДА (b1g...):
-FOLDER_ID = "b1gqph120fbkgpbskb41"                    # ← твой folder_id
-# ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+# ←←← Твои ключи (они уже у тебя есть в файле, не трогай)
+API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
+FOLDER_ID = "b1gqph120fbkgpbskb41"
+# ←←←
 
 def ask_yandex_gpt(prompt):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
@@ -16,50 +14,83 @@ def ask_yandex_gpt(prompt):
     }
     payload = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
-        "completionOptions": {
-            "temperature": 0.6,
-            "maxTokens": 2000
-        },
-        "messages": [
-            {"role": "user", "text": prompt}
-        ]
+        "completionOptions": {"temperature": 0.6, "maxTokens": 2500},
+        "messages": [{"role": "user", "text": prompt}]
     }
     try:
         r = httpx.post(url, headers=headers, json=payload, timeout=60.0)
         r.raise_for_status()
         return r.json()["result"]["alternatives"][0]["message"]["text"]
     except Exception as e:
-        return f"Ошибка YandexGPT: {str(e)}"
+        return f"Ошибка: {e}"
 
 st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
 st.title("ЕГЭ-GPT по информатике 2026")
-st.markdown("Генератор и проверка задач №6–27 на настоящем YandexGPT")
 
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
 if st.button("Сгенерировать новую задачу"):
-    with st.spinner("YandexGPT думает..."):
-        prompt = f"""Ты эксперт ФИПИ ЕГЭ по информатике 2026 года.
-Сгенерируй СОВЕРШЕННО НОВУЮ задачу №{num} (не из открытого банка ФИПИ).
-Выведи строго в формате:
-1. Условие задачи
-2. Правильный ответ (число или короткий код)
-3. Подробный разбор решения шаг за шагом"""
+    with st.spinner("YandexGPT создаёт задачу..."):
+        prompt = f"""Ты эксперт ФИПИ ЕГЭ по информатике 2026.
+Сгенерируй новую задачу №{num} (не из банка ФИПИ).
+
+Выведи строго в трёх частях:
+### УСЛОВИЕ
+[условие]
+
+### ОТВЕТ
+[правильный ответ — число или короткий код]
+
+### РАЗБОР
+[подробный разбор решения]"""
+
         result = ask_yandex_gpt(prompt)
-        st.success("Готово!")
-        st.markdown(result)
+        
+        parts = {"condition": "", "answer": "", "explanation": ""}
+        current = None
+        for line in result.split("\n"):
+            line = line.strip()
+            if line.startswith("### УСЛОВИЕ"): current = "condition"
+            elif line.startswith("### ОТВЕТ"): current = "answer"
+            elif line.startswith("### РАЗБОР"): current = "explanation"
+            elif current and line:
+                parts[current] += line + "\n"
 
-st.markdown("---")
-st.subheader("Проверка решения")
-solution = st.text_area("Вставь сюда своё решение или ответ:")
-if st.button("Проверить"):
-    if solution.strip():
-        with st.spinner("Проверяю..."):
-            check = f"""Ты строгий эксперт ЕГЭ. Проверь решение задачи №{num}:
-{solution}
+        st.session_state.task = parts
+        st.session_state.generated = True
 
-Укажи ошибки, правильный ответ и сколько баллов дал бы ФИПИ (из 100)."""
-            answer = ask_yandex_gpt(check)
-            st.markdown(answer)
-    else:
-        st.warning("Сначала введи решение!")
+        st.success("Задача готова!")
+        st.markdown("### Условие")
+        st.markdown(parts["condition"])
+
+if st.session_state.get("generated"):
+    st.markdown("---")
+    user_solution = st.text_area("Твоё решение или ответ:", height=150, key="solution")
+
+    if st.button("Проверить"):
+        if user_solution.strip():
+            with st.spinner("Проверяю..."):
+                check_prompt = f"""Задача №{num}:
+{st.session_state.task['condition']}
+
+Решение ученика:
+{user_solution}
+
+Ты эксперт ФИПИ. Дай:
+- оценку в баллах (из 100)
+- ошибки (если есть)
+- правильный ответ
+- краткий разбор"""
+                feedback = ask_yandex_gpt(check_prompt)
+                st.markdown("### Результат проверки")
+                st.markdown(feedback)
+
+                with st.expander("Спойлер: правильный ответ и разбор", expanded=False):
+                    st.success(f"Ответ: {st.session_state.task['answer']}")
+                    st.info(st.session_state.task['explanation'])
+        else:
+            st.warning("Напиши хоть что-нибудь :)")
+else:
+    st.info("↑ Сначала сгенерируй задачу")
+
+st.caption("Работает на YandexGPT • 2026 • Ты сделал это!")
