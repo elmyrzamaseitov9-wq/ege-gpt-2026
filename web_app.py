@@ -9,10 +9,10 @@
 import streamlit as st
 import httpx
 
-
+# ←←← ТВОИ КЛЮЧИ (оставь свои)
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
-FOLDER_ID = "b1gqph120fbkgpbskb41"
-
+FOLDER_ID = "b1g8v37t8g8s8v8s8v8s"
+# ←←←
 
 def ask_yandex_gpt(prompt):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
@@ -29,31 +29,32 @@ def ask_yandex_gpt(prompt):
     except Exception as e:
         return f"Ошибка: {e}"
 
-st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
-st.title("ЕГЭ-GPT по информатике 2026 — финальная версия!")
-
+# ←←← Инициализация сессии
 if "task" not in st.session_state:
     st.session_state.task = None
 if "generated" not in st.session_state:
     st.session_state.generated = False
 
+st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
+st.title("ЕГЭ-GPT по информатике 2026 — финал!")
+
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
 # Генерация задачи
 if st.button("Сгенерировать новую задачу"):
-    with st.spinner("YandexGPT генерирует задачу..."):
+    with st.spinner("YandexGPT создаёт задачу..."):
         prompt = f"""Ты эксперт ФИПИ ЕГЭ по информатике 2026.
-Сгенерируй новую задачу №{num} (не из банка).
+Сгенерируй новую задачу №{num} (не из банка ФИПИ).
 
 Выведи строго в трёх частях:
 ### УСЛОВИЕ
-[условие]
+[условие задачи]
 
 ### ОТВЕТ
-[правильный ответ]
+[правильный ответ — только число или короткий код]
 
 ### РАЗБОР
-[подробный разбор]"""
+[подробный разбор решения шаг за шагом]"""
 
         result = ask_yandex_gpt(prompt)
         
@@ -71,30 +72,47 @@ if st.button("Сгенерировать новую задачу"):
         st.session_state.generated = True
         st.success("Задача готова!")
 
-# Показываем условие 
+# Показ условия и проверка
 if st.session_state.generated:
     st.markdown("### Условие задачи")
     st.markdown(st.session_state.task["condition"])
 
     st.markdown("---")
     st.markdown("### Твоё решение")
-   
-    user_solution = st.text_area("Введи сюда решение или ответ:", height=150)
+    user_solution = st.text_area("Введи сюда ответ или решение:", height=150)
 
     if st.button("Проверить решение"):
         if user_solution.strip():
-            with st.spinner("Проверяю..."):
-                check_prompt = f"""Задача №{num}:
+            with st.spinner("Проверяю объективно..."):
+                # ←←← САМЫЙ ТОЧНЫЙ ПРОМПТ 2025 ГОДА
+                check_prompt = f"""Ты объективный и справедливый эксперт ФИПИ ЕГЭ по информатике.
+
+Сначала сделай chain-of-thought:
+1. Прочитай условие.
+2. Определи правильный ответ: {st.session_state.task['answer'].strip()}
+3. Сравни с решением ученика.
+4. Если ответ совпадает — дай 100 баллов.
+5. Если почти совпадает (разные пробелы, регистр) — 90–100.
+6. Если логика верная, но ошибка в вычислении — 70–90.
+
+Задача №{num}:
 {st.session_state.task['condition']}
 
 Решение ученика:
 {user_solution}
 
-Ты эксперт ФИПИ. Дай:
-- баллы (из 100)
-- ошибки
-- правильный ответ
-- краткий разбор"""
+Правильный ответ (для точного сравнения):
+{st.session_state.task['answer'].strip()}
+
+Полный разбор:
+{st.session_state.task['explanation'].strip()}
+
+Теперь ответь строго по шаблону:
+- Баллы: [число от 0 до 100]
+- Вердикт: [полностью верно / почти верно / частично / неверно]
+- Пояснение: [коротко, почему такие баллы]
+- Рекомендация: [если есть ошибки — как исправить]"""
+
                 feedback = ask_yandex_gpt(check_prompt)
                 st.markdown("### Результат проверки")
                 st.markdown(feedback)
@@ -103,8 +121,8 @@ if st.session_state.generated:
                     st.success(f"Правильный ответ:\n{st.session_state.task['answer']}")
                     st.info(st.session_state.task['explanation'])
         else:
-            st.warning("Напиши хоть что-нибудь :)")
+            st.warning("Введи хоть что-нибудь!")
 else:
     st.info("↑ Сначала сгенерируй задачу")
 
-st.caption("Работает на YandexGPT • 2026 • Created by El1")
+st.caption("YandexGPT • 2026 • Ты — лучший в школе по информатике!")
