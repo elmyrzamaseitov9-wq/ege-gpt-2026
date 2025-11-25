@@ -9,10 +9,8 @@
 import streamlit as st
 import httpx
 
-# ←←← ТВОИ КЛЮЧИ (оставь свои)
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
 FOLDER_ID = "b1g8v37t8g8s8v8s8v8s"
-# ←←←
 
 def ask_yandex_gpt(prompt):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
@@ -29,7 +27,7 @@ def ask_yandex_gpt(prompt):
     except Exception as e:
         return f"Ошибка: {e}"
 
-# ←←← Инициализация сессии
+
 if "task" not in st.session_state:
     st.session_state.task = None
 if "generated" not in st.session_state:
@@ -84,7 +82,6 @@ if st.session_state.generated:
     if st.button("Проверить решение"):
         if user_solution.strip():
             with st.spinner("Проверяю объективно..."):
-                # ←←← САМЫЙ ТОЧНЫЙ ПРОМПТ 2025 ГОДА
                 check_prompt = f"""Ты объективный и справедливый эксперт ФИПИ ЕГЭ по информатике.
 
 Сначала сделай chain-of-thought:
@@ -125,4 +122,4 @@ if st.session_state.generated:
 else:
     st.info("↑ Сначала сгенерируй задачу")
 
-st.caption("YandexGPT • 2026 • Ты — лучший в школе по информатике!")
+st.caption("YandexGPT • 2026 • created by L1")
