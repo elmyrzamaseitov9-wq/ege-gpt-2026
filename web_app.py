@@ -2,10 +2,8 @@ import streamlit as st
 import httpx
 import re
 
-# ←←← ТВОИ КЛЮЧИ
 API_KEY   = "AQVN0SFdgaEgntb54gvJV8YgDj0cnU0XN6E6EOdi"
 FOLDER_ID = "b1gqph120fbkgpbskb41"
-# ←←←
 
 def ask_yandex_gpt(prompt):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
@@ -29,12 +27,12 @@ if "generated" not in st.session_state:
     st.session_state.generated = False
 
 st.set_page_config(page_title="ЕГЭ-GPT 2026", page_icon="robot")
-st.title("ЕГЭ-GPT 2026 — ПОСЛЕДНЯЯ ВЕРСИЯ")
+st.title("ЕГЭ-GPT 2026")
 
 num = st.selectbox("Номер задачи:", ["6", "8", "12", "15", "16", "19-21", "23", "24", "25", "27"])
 
 if st.button("Сгенерировать задачу"):
-    with st.spinner("Генерирую правильно..."):
+    with st.spinner("Генерирую задачу..."):
         prompt = f"""ТЫ ОБЯЗАН СДЕЛАТЬ ТОЧНО ТАК:
 
 Генерируй задачу №{num} ЕГЭ по информатике 2026 как на фипи.
@@ -63,17 +61,15 @@ if st.button("Сгенерировать задачу"):
         expl_text = explanation.group(1).strip() if explanation else "Нет разбора"
         raw_ans = answer_raw.group(1).strip() if answer_raw else ""
 
-        # Убираем мусор
+        
         clean_ans = raw_ans.strip(' "\'[]\\n\\r')
 
-        # ЕСЛИ ОПЯТЬ "[число]" ИЛИ "число" — ищем первое число/текст в разборе
         if not clean_ans or "число" in clean_ans.lower() or clean_ans == "":
             # Ищем числа
             numbers = re.findall(r'\d+', expl_text)
             if numbers:
                 clean_ans = " ".join(numbers[:2]) if len(numbers) >= 2 else numbers[0]
             else:
-                # Если не числа — берём первое слово после "ответ:" или "равно"
                 match = re.search(r"(?:ответ|равно|будет)[\s:]*([^\s.,;]+)", expl_text, re.IGNORECASE)
                 clean_ans = match.group(1) if match else "42"
 
@@ -111,4 +107,4 @@ if st.session_state.generated:
 else:
     st.info("↑ Нажми кнопку")
 
-st.caption("Последняя версия • Никаких «[число]» • Работает со всеми типами ответов • 2026")
+st.caption("Created by L1 • 2026")
